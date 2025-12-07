@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schoters ATZ Bot - WhatsApp Simulator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #e5ddd5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .phone-frame {
+            width: 100%;
+            max-width: 450px;
+            height: 750px;
+            background: white;
+            border-radius: 30px;
+            box-shadow: 0 10px 50px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        
+        .header-info h3 {
+            font-size: 17px;
+            font-weight: 600;
+        }
+        
+        .header-info p {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+        
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #e5ddd5 url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAHElEQVQYV2NkYGD4z8DAwMgABXAGjgpHBUMqEABnXQEHJeY8lAAAAABJRU5ErkJggg==');
+        }
+        
+        .message {
+            display: flex;
+            margin-bottom: 15px;
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .message.sent {
+            justify-content: flex-end;
+        }
+        
+        .message.received {
+            justify-content: flex-start;
+        }
+        
+        .message-content {
+            max-width: 80%;
+            padding: 10px 15px;
+            border-radius: 10px;
+            position: relative;
+        }
+        
+        .message.sent .message-content {
+            background: #dcf8c6;
+            border-bottom-right-radius: 2px;
+        }
+        
+        .message.received .message-content {
+            background: white;
+            border-bottom-left-radius: 2px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        
+        .message-text {
+            font-size: 14px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        .message-time {
+            font-size: 11px;
+            color: #667;
+            text-align: right;
+            margin-top: 5px;
+        }
+        
+        .typing-indicator {
+            display: none;
+            padding: 10px 15px;
+            background: white;
+            border-radius: 10px;
+            width: fit-content;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        
+        .typing-indicator.active {
+            display: block;
+        }
+        
+        .typing-indicator span {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #999;
+            margin: 0 2px;
+            animation: typing 1.4s infinite;
+        }
+        
+        .typing-indicator span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .typing-indicator span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+            }
+            30% {
+                transform: translateY(-10px);
+            }
+        }
+        
+        .quick-replies {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            padding: 12px;
+            background: #f8f9fa;
+            border-top: 1px solid #e0e0e0;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .quick-reply-btn {
+            padding: 10px 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: left;
+            line-height: 1.3;
+        }
+        
+        .quick-reply-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
+        .quick-reply-btn:active {
+            transform: translateY(0);
+        }
+        
+        .input-area {
+            padding: 10px;
+            background: #f0f0f0;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        #messageInput {
+            flex: 1;
+            padding: 12px 15px;
+            border: none;
+            border-radius: 25px;
+            font-size: 14px;
+            outline: none;
+            background: white;
+        }
+        
+        #sendBtn {
+            width: 45px;
+            height: 45px;
+            border: none;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+        
+        #sendBtn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
+        #sendBtn:active {
+            transform: scale(0.95);
+        }
+
+        .link {
+            color: #0066cc;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="phone-frame">
+        <div class="header">
+            <div class="avatar">🎓</div>
+            <div class="header-info">
+                <h3>Schoters ATZ Bot</h3>
+                <p>Online - Siap Membantu</p>
+            </div>
+        </div>
+        
+        <div class="chat-container" id="chatContainer">
+            <div class="typing-indicator" id="typingIndicator">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+        
+        <div class="quick-replies">
+            <button class="quick-reply-btn" onclick="sendQuickReply('1')">1️⃣ On-Boarding</button>
+            <button class="quick-reply-btn" onclick="sendQuickReply('2')">2️⃣ Rekaman Kelas</button>
+            <button class="quick-reply-btn" onclick="sendQuickReply('3')">3️⃣ Link Profiling</button>
+            <button class="quick-reply-btn" onclick="sendQuickReply('4')">4️⃣ Job Post</button>
+            <button class="quick-reply-btn" onclick="sendQuickReply('5')">5️⃣ Perizinan Kelas</button>
+            <button class="quick-reply-btn" onclick="sendQuickReply('6')">6️⃣ SSW</button>
+            <button class="quick-reply-btn" onclick="sendQuickReply('7')">7️⃣ Berkas</button>
+            <button class="quick-reply-btn" onclick="sendQuickReply('8')">8️⃣ Dana Talang</button>
+        </div>
+        
+        <div class="input-area">
+            <input type="text" id="messageInput" placeholder="Ketik pesan..." onkeypress="handleKeyPress(event)">
+            <button id="sendBtn" onclick="sendMessage()">➤</button>
+        </div>
+    </div>
+
+    <script>
+        const responses = {
+            greeting: `👋 Halo! Selamat datang di *Schoters ATZ Bot*
+
+Saya adalah asisten virtual yang siap membantu menjawab pertanyaan seputar program Schoters.
+
+Silakan pilih informasi yang Anda butuhkan:
+
+1️⃣ Kapan dilaksanakannya On-Boarding?
+2️⃣ Bagaimana mengakses rekaman kelas?
+3️⃣ Dimana Link Profiling?
+4️⃣ Dimana melihat Job Post?
+5️⃣ Perizinan ikut kelas
+6️⃣ Di SSW ada apa saja?
+7️⃣ Berkas yang diperlukan?
+8️⃣ Bagaimana menggunakan dana talang?
+
+Ketik angka 1-8 atau klik tombol di bawah untuk informasi lebih lanjut! 😊`,
+            
+            onboarding: `📅 *Informasi On-Boarding*
+
+Sesi onboarding merupakan sesi untuk memberikan informasi mengenai jadwal, alur program, dan lain sebagainya ya, dilakukan secara online. Alina sarankan untuk mengikuti sesi tersebut supaya memahami alur program kelas.
+
+Lalu untuk sesi On Boarding biasanya kurang lebih 2-4 minggu setelah pendaftaran maka akan di invite melalui Google Meet, jadi mohon di cek secara berkala Gmail nya ya ^^
+
+Ketik *MENU* untuk kembali ke menu utama.`,
+            
+            rekaman: `🎥 *Rekaman Kelas via Google Calendar*
+
+Terkait record dapat diakses pada Google Calendar (GCal) per tanggal kelasnya dan akan tersedia 2-5 jam setelah kelas terlaksana ya Kak, dapat dicek secara berkala.
+
+Untuk panduan lengkap cara memutar rekaman ulang di Google Calendar (GCal), silahkan menonton video tutorial berikut:
+
+🔗 https://bit.ly/CekRekamanWA
+
+🙏☺️
+
+Ketik *MENU* untuk kembali.`,
+            
+            profiling: `📝 *Link Profiling*
+
+Berikut adalah link untuk mengisi profiling:
+
+🔗 https://bit.ly/LinkProfiling
+
+Silakan klik link di atas untuk melengkapi data profiling Anda.
+
+Ketik *MENU* untuk kembali.`,
+            
+            jobpost: `💼 *Job Post yang Tersedia*
+
+Berikut adalah link-link Job Post yang tersedia:
+
+📌 Professional:
+🔗 https://bit.ly/jobpostWA-PRO
+
+📌 Engineering:
+🔗 https://bit.ly/jobpostWA-ENG
+
+📌 Tokutei Ginou (TG):
+🔗 https://bit.ly/jobpostWA-TG
+
+📌 Ausbildung:
+🔗 https://bit.ly/jobpostWAA-AUS
+
+Silakan cek lowongan yang sesuai dengan minat Anda!
+
+Ketik *MENU* untuk kembali.`,
+            
+            perizinan: `✋ *Perizinan Ikut Kelas*
+
+Untuk keperluan izin tidak mengikuti kelas, kakak bisa langsung menyampaikan izin tersebut melalui grup WhatsApp kelas, ya kak dan tidak perlu PC tutor secara pribadi.
+
+Kalau kakak sudah tahu jadwalnya sebelum pertemuan dimulai, izinnya juga boleh langsung disampaikan di jadwal pertemuan saat kelas berlangsung kepada tutor.
+
+Ketik *MENU* untuk kembali.`,
+            
+            ssw: `🍱 *Informasi SSW (Tokutei Ginou)*
+
+Untuk Kelas SSW Tokutei Ginou itu ada kelas:
+• Pengolahan Makanan
+• Restaurant
+
+ya ^^
+
+Ketik *MENU* untuk kembali.`,
+            
+            berkas: `📄 *Berkas yang Diperlukan*
+
+*ENGLISH FOR WORK ABROAD:*
+
+Dokumen dari kandidat:
+• CV
+• Paspor
+• Medical Check Up (MCU) — menunggu arahan dari mitra
+• SKCK tingkat Mabes Polri — arahan dari mitra
+• Apostille (opsional, tergantung kebutuhan mitra)
+
+Dokumen yang diurus mitra:
+• Visa
+• Work Permit
+• Flight Ticket
+• OPP Code
+• ID CPMI
+
+Kebutuhan exclude (biaya sendiri):
+• Paspor
+• MCU
+• SKCK Mabes & Apostille (bisa dibantu mitra dengan biaya tambahan)
+
+*AUSBILDUNG:*
+
+Dokumen yang dibutuhkan:
+• Sertifikat bahasa Jerman minimal B1
+• Paspor
+• Visa
+• Kontrak kerja
+• Ijazah (diterjemahkan & dilegalisasi)
+• Akta kelahiran (diterjemahkan & dilegalisasi)
+• Dokumen tambahan lain sesuai kebutuhan perusahaan
+
+Ketik *MENU* untuk kembali.`,
+            
+            danatalang: `💰 *Dana Talang*
+
+Dana talang sistemnya menggunakan mitra, sehingga seluruh teknisnya bisa dibaca di link dana talang:
+
+🔗 https://bit.ly/DanaTalangWA2025
+
+Biasanya dari job post yang tersedia, ada dana talang dari mitra (tidak semua lowongan ada), ada beberapa yang disediakan sesuai sistem dari mitra untuk sampai negara tujuan.
+
+Ketik *MENU* untuk kembali.`,
+            
+            default: `Maaf, saya tidak mengerti pesan Anda 😊
+
+Silakan ketik angka 1-8 untuk memilih menu:
+
+1️⃣ On-Boarding
+2️⃣ Rekaman Kelas
+3️⃣ Link Profiling
+4️⃣ Job Post
+5️⃣ Perizinan Kelas
+6️⃣ SSW
+7️⃣ Berkas
+8️⃣ Dana Talang
+
+Atau ketik *MENU* untuk melihat pilihan lengkap.`
+        };
+
+        let isFirstMessage = true;
+
+        function addMessage(text, type) {
+            const chatContainer = document.getElementById('chatContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            
+            const now = new Date();
+            const time = now.getHours().toString().padStart(2, '0') + ':' + 
+                        now.getMinutes().toString().padStart(2, '0');
+            
+            const formattedText = text.replace(/\*([^*]+)\*/g, '<strong>$1</strong>')
+                                     .replace(/(https?:\/\/[^\s]+)/g, '<span class="link">$1</span>');
+            
+            messageDiv.innerHTML = `
+                <div class="message-content">
+                    <div class="message-text">${formattedText}</div>
+                    <div class="message-time">${time}</div>
+                </div>
+            `;
+            
+            chatContainer.insertBefore(messageDiv, document.getElementById('typingIndicator'));
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function showTyping() {
+            document.getElementById('typingIndicator').classList.add('active');
+            const chatContainer = document.getElementById('chatContainer');
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function hideTyping() {
+            document.getElementById('typingIndicator').classList.remove('active');
+        }
+
+        function getResponse(message) {
+            const msg = message.toLowerCase().trim();
+            
+            if (msg.includes('hi') || msg.includes('halo') || msg.includes('hai') || 
+                msg.includes('hello') || msg.includes('menu') || msg.includes('mulai')) {
+                return responses.greeting;
+            } else if (msg === '1' || msg.includes('onboard') || msg.includes('on-board')) {
+                return responses.onboarding;
+            } else if (msg === '2' || msg.includes('rekam') || msg.includes('calendar')) {
+                return responses.rekaman;
+            } else if (msg === '3' || msg.includes('profil')) {
+                return responses.profiling;
+            } else if (msg === '4' || msg.includes('job')) {
+                return responses.jobpost;
+            } else if (msg === '5' || msg.includes('izin') || msg.includes('perizinan')) {
+                return responses.perizinan;
+            } else if (msg === '6' || msg.includes('ssw')) {
+                return responses.ssw;
+            } else if (msg === '7' || msg.includes('berkas') || msg.includes('dokumen')) {
+                return responses.berkas;
+            } else if (msg === '8' || msg.includes('dana') || msg.includes('talang')) {
+                return responses.danatalang;
+            } else {
+                return responses.default;
+            }
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (message === '') return;
+            
+            addMessage(message, 'sent');
+            input.value = '';
+            
+            showTyping();
+            
+            setTimeout(() => {
+                hideTyping();
+                const response = isFirstMessage ? responses.greeting : getResponse(message);
+                addMessage(response, 'received');
+                isFirstMessage = false;
+            }, 1000 + Math.random() * 1000);
+        }
+
+        function sendQuickReply(number) {
+            document.getElementById('messageInput').value = number;
+            sendMessage();
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        window.onload = function() {
+            setTimeout(() => {
+                addMessage(responses.greeting, 'received');
+                isFirstMessage = false;
+            }, 500);
+        };
+    </script>
+</body>
+</html>
